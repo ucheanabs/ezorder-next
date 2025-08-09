@@ -1,4 +1,3 @@
-cat > app/order/OrderClient.tsx <<'EOF'
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -174,4 +173,3 @@ function Toast({ text, onClose }:{ text:string; onClose:()=>void }) {
     </div>
   );
 }
-EOF

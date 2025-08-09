@@ -1,4 +1,3 @@
-cat > app/qr/QRClient.tsx <<'EOF'
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -20,7 +19,9 @@ export default function QRClient() {
 
   useEffect(() => {
     if (!orderUrl) return;
-    QRCode.toDataURL(orderUrl, { width: 320, margin: 2 }).then(setQr).catch(() => setQr(''));
+    QRCode.toDataURL(orderUrl, { width: 320, margin: 2 })
+      .then(setQr)
+      .catch(() => setQr(''));
   }, [orderUrl]);
 
   return (
@@ -79,8 +80,18 @@ export default function QRClient() {
           </div>
         </div>
       </div>
+
       <style jsx global>{`
-        .field { @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-200; }
+        .field { 
+          width: 100%;
+          border-radius: 0.5rem;
+          border: 1px solid rgb(226 232 240);
+          background: white;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          outline: none;
+        }
+        .field:focus { box-shadow: 0 0 0 4px rgb(16 185 129 / 0.15); }
       `}</style>
     </div>
   );
@@ -94,4 +105,3 @@ function Field({label, children}:{label:string; children:React.ReactNode}) {
     </label>
   );
 }
-EOF

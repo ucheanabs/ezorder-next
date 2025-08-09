@@ -1,4 +1,3 @@
-cat > app/order/page.tsx <<'EOF'
 export const dynamic = 'force-dynamic';
 import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
@@ -12,4 +11,3 @@ export default function Page() {
     </Suspense>
   );
 }
-EOF
