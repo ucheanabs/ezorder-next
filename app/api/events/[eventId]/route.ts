@@ -9,8 +9,13 @@ export async function GET(_: Request, { params }: { params: { eventId: string }}
 
 export async function PUT(req: Request, { params }: { params: { eventId: string }}) {
   const data = await req.json();
-  const menu = Array.isArray(data.menu) ? data.menu : [];
-  const ev = upsertEvent({ id: params.eventId, name: data.name, date: data.date, venue: data.venue, menu });
+  const ev = upsertEvent({
+    id: params.eventId,
+    name: data.name,
+    date: data.date,
+    venue: data.venue,
+    menu: Array.isArray(data.menu) ? data.menu : [],
+  });
   return NextResponse.json(ev);
 }
 
