@@ -1,4 +1,3 @@
-cat > app/admin/page.tsx <<'EOF'
 'use client';
 import { useEffect, useState } from 'react';
 
@@ -123,4 +122,3 @@ export default function AdminPage() {
     </div>
   );
 }
-EOF
