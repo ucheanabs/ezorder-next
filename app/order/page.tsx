@@ -26,41 +26,10 @@ export default function OrderPage() {
     (async () => {
       try {
         const res = await fetch(`/api/events/${encodeURIComponent(eventId)}/menu`, { cache: 'no-store' });
-        i
-
-cat > app/order/page.tsx <<'EOF'
-'use client';
-
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-
-const money = (n:number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(n);
-
-type Line = { id: string; name: string; price: number; qty?: number };
-type Order = { id: string; lines: Line[]; status: string; table?: string; seat?: string; name?: string };
-
-export default function OrderPage() {
-  const searchParams = useSearchParams();
-  const [menu, setMenu] = useState<Line[]>([]);
-  const [cart, setCart] = useState<Record<string, number>>({});
-  const [status, setStatus] = useState<'idle'|'placing'|'placed'|'preparing'|'out_for_delivery'|'delivered'>('idle');
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const eventId = searchParams?.get('eventId') || 'demo-001';
-  const table = searchParams?.get('table') || '';
-  const seat = searchParams?.get('seat') || '';
-  const name = searchParams?.get('name') || '';
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const res = await fetch(`/api/events/${encodeURIComponent(eventId)}/menu`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Menu HTTP ${res.status}`);
         const data = await res.json();
         if (alive) setMenu(Array.isArray(data) ? data : []);
-      } catch (e:any) {
+      } catch {
         if (alive) setError('Could not load menu. Please refresh.');
       }
     })();
@@ -85,7 +54,7 @@ export default function OrderPage() {
       const data: Order & { id: string } = await res.json();
       setOrderId(data.id);
       setStatus('placed');
-    } catch (e:any) {
+    } catch {
       setStatus('idle');
       setError('Could not place order. Please try again.');
     }
