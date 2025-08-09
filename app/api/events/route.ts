@@ -1,27 +1,21 @@
-cat > "app/api/events/[eventId]/route.ts" <<'EOF'
 import { NextResponse } from "next/server";
-import { getEvent, upsertEvent, deleteEvent } from "../../../../lib/db";
+import { listEvents, upsertEvent } from "../../../lib/db";
 
-export async function GET(_: Request, { params }: { params: { eventId: string }}) {
-  const ev = getEvent(params.eventId);
-  if (!ev) return NextResponse.json({ error: "not found" }, { status: 404 });
-  return NextResponse.json(ev);
+export async function GET() {
+  return NextResponse.json({ events: listEvents() });
 }
 
-export async function PUT(req: Request, { params }: { params: { eventId: string }}) {
+export async function POST(req: Request) {
   const data = await req.json();
-  const ev = upsertEvent({
-    id: params.eventId,
-    name: data.name,
-    date: data.date,
-    venue: data.venue,
-    menu: Array.isArray(data.menu) ? data.menu : [],
-  });
-  return NextResponse.json(ev);
+  if (!data?.name || !data?.date || !data?.venue) {
+    return NextResponse.json({ error: "name, date, and venue are required" }, { status: 400 });
+  }
+  const menu = Array.isArray(data.menu) ? data.menu.map((m:any)=>({
+    id: String(m.id || m.name || `m_${Date.now()}`),
+    name: String(m.name || ""),
+    price: Number(m.price || 0),
+    qty: Number(m.qty || 0),
+  })) : [];
+  const ev = upsertEvent({ id: data.id, name: data.name, date: data.date, venue: data.venue, menu });
+  return NextResponse.json(ev, { status: 201 });
 }
-
-export async function DELETE(_: Request, { params }: { params: { eventId: string }}) {
-  deleteEvent(params.eventId);
-  return NextResponse.json({ ok: true });
-}
-EOF
