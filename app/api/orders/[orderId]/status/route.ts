@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DB } from '../../../../../lib/db';
+import { DB } from '../../../../lib/db';
 
 export async function POST(req: Request, { params }: { params: { orderId: string }}){
   const body = await req.json();
