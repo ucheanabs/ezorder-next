@@ -24,6 +24,9 @@ export default function QRClient() {
       .catch(() => setQr(''));
   }, [orderUrl]);
 
+  const inputCls =
+    'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-emerald-200';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       <div className="mx-auto max-w-5xl px-6 py-10">
@@ -60,18 +63,18 @@ export default function QRClient() {
             <div className="text-sm font-semibold text-slate-700">Demo parameters</div>
             <div className="mt-4 grid gap-4">
               <Field label="Event ID">
-                <input value={eventId} onChange={e=>setEventId(e.target.value)} className="field" />
+                <input value={eventId} onChange={e=>setEventId(e.target.value)} className={inputCls} />
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Table">
-                  <input value={table} onChange={e=>setTable(e.target.value)} className="field" />
+                  <input value={table} onChange={e=>setTable(e.target.value)} className={inputCls} />
                 </Field>
                 <Field label="Seat">
-                  <input value={seat} onChange={e=>setSeat(e.target.value)} className="field" />
+                  <input value={seat} onChange={e=>setSeat(e.target.value)} className={inputCls} />
                 </Field>
               </div>
               <Field label="Name (optional)">
-                <input value={name} onChange={e=>setName(e.target.value)} className="field" />
+                <input value={name} onChange={e=>setName(e.target.value)} className={inputCls} />
               </Field>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 break-all">
                 {orderUrl || 'Building link…'}
@@ -80,19 +83,6 @@ export default function QRClient() {
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        .field { 
-          width: 100%;
-          border-radius: 0.5rem;
-          border: 1px solid rgb(226 232 240);
-          background: white;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
-          outline: none;
-        }
-        .field:focus { box-shadow: 0 0 0 4px rgb(16 185 129 / 0.15); }
-      `}</style>
     </div>
   );
 }

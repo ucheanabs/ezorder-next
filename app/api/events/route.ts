@@ -1,3 +1,4 @@
+cat > "app/api/events/[eventId]/route.ts" <<'EOF'
 import { NextResponse } from "next/server";
 import { getEvent, upsertEvent, deleteEvent } from "../../../../lib/db";
 
@@ -23,3 +24,4 @@ export async function DELETE(_: Request, { params }: { params: { eventId: string
   deleteEvent(params.eventId);
   return NextResponse.json({ ok: true });
 }
+EOF
