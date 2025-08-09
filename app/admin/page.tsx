@@ -1,90 +1,78 @@
 'use client';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { useEffect, useState } from 'react';
-import { OrdersOverTime, TopItems } from '../components/Charts';
+import { useEffect, useMemo, useState } from 'react';
 
-export default function Admin(){
-  const [eventId, setEventId] = useState('demo-001');
+export default function AdminPage() {
   const [orders, setOrders] = useState<any[]>([]);
+  const eventId = 'demo-001';
 
-  async function load(){
-    const res = await fetch(`/api/events/${eventId}/orders`);
-    if (!res.ok) return;
-    setOrders(await res.json());
-  }
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch(`/api/events/${eventId}/orders`);
+      const data = await res.json();
+      setOrders(data);
+    };
+    load();
+    const t = setInterval(load, 4000);
+    return () => clearInterval(t);
+  }, []);
 
-  useEffect(() => { load(); const t = setInterval(load, 3000); return () => clearInterval(t); }, [eventId]);
-
-  const byHour = Array.from({ length: 10 }).map((_,i)=>({ time: `${12+i}:00`, orders: Math.floor(Math.random()*14)+2 }));
-  const top = [{ name: 'Jollof', count: 32 }, { name: 'Spring Rolls', count: 21 }, { name: 'Fruit', count:16 }];
+  const metrics = useMemo(() => {
+    const total = orders.reduce((s,o)=> s + o.lines.reduce((x,l)=> x + l.price*l.qty,0), 0);
+    const count = orders.length;
+    const pending = orders.filter(o=>o.status==='placed').length;
+    const delivering = orders.filter(o=>o.status==='preparing' || o.status==='out_for_delivery').length;
+    return { total, count, pending, delivering };
+  }, [orders]);
 
   return (
-    <div>
-      <Header />
-      <main className="max-w-6xl mx-auto px-4 section space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-7xl px-4">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+      <p className="text-sm text-slate-600">Live overview for event {eventId}</p>
 
-          <h1 className="h1">Planner Dashboard</h1>
+      <div className="mt-6 grid gap-4 md:grid-cols-4">
+        <Card label="Revenue" value={`₦${metrics.total.toLocaleString()}`} />
+        <Card label="Orders" value={metrics.count} />
+        <Card label="Pending" value={metrics.pending} />
+        <Card label="In Progress" value={metrics.delivering} />
+      </div>
 
-          <div className="flex items-center gap-2">
-
-            <input value={eventId} onChange={e=>setEventId(e.target.value)} className="border rounded-xl px-3 py-2"/>
-
-            <button className="btn btn-outline" onClick={load}>Refresh</button>
-
-          </div>
-
-        </div>
-
-
-        <div className="grid md:grid-cols-2 gap-6">
-
-          <div className="card p-4"><div className="font-heading mb-2">Orders by Time</div><OrdersOverTime data={byHour}/></div>
-
-          <div className="card p-4"><div className="font-heading mb-2">Top Items</div><TopItems data={top}/></div>
-
-        </div>
-
-
-        <div className="card p-4 overflow-auto">
-
-          <table className="w-full text-sm">
-
-            <thead><tr className="text-left"><th className="p-2">Order ID</th><th className="p-2">Table</th><th className="p-2">Name</th><th className="p-2">Items</th><th className="p-2">Status</th></tr></thead>
-
-            <tbody>
-
-              {orders.map((o:any) => (
-
-                <tr key={o.orderId} className="border-t">
-
-                  <td className="p-2">{o.orderId}</td>
-
-                  <td className="p-2">{o.table}{o.seat?'-'+o.seat:''}</td>
-
-                  <td className="p-2">{o.name || ''}</td>
-
-                  <td className="p-2">{o.items.map((it:any)=>`${it.id}×${it.qty}`).join(', ')}</td>
-
-                  <td className="p-2 font-semibold">{o.status}</td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </main>
-
-      <Footer />
-
+      <div className="mt-8 overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-emerald-100">
+          <thead className="bg-emerald-50">
+            <tr className="text-left text-sm text-slate-600">
+              <th className="px-4 py-3">Order</th>
+              <th className="px-4 py-3">Guest</th>
+              <th className="px-4 py-3">Table</th>
+              <th className="px-4 py-3">Items</th>
+              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-emerald-50 bg-white">
+            {orders.map((o:any) => (
+              <tr key={o.id} className="text-sm text-slate-700">
+                <td className="px-4 py-3 font-medium">{o.id.slice(0,8)}</td>
+                <td className="px-4 py-3">{o.name || '-'}</td>
+                <td className="px-4 py-3">{o.table}{o.seat ? ` • ${o.seat}` : ''}</td>
+                <td className="px-4 py-3">{o.lines.map((l:any)=> `${l.name}×${l.qty}`).join(', ')}</td>
+                <td className="px-4 py-3">₦{o.lines.reduce((s:number,l:any)=> s+l.price*l.qty,0).toLocaleString()}</td>
+                <td className="px-4 py-3">
+                  <span className="rounded-lg bg-emerald-50 px-2 py-1 text-emerald-700">{o.status}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
+  );
+}
 
-  )
-
+function Card({label, value}:{label:string; value:React.ReactNode}) {
+  return (
+    <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+      <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{label}</div>
+      <div className="mt-2 text-2xl font-bold">{value}</div>
+    </div>
+  );
 }

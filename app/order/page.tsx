@@ -7,169 +7,87 @@ import { useEffect, useMemo, useState } from 'react';
 
 const money = (n:number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(n);
 
-export default function OrderPage(){
-  const [eventId, setEventId] = useState<string>('demo-001');
-  const [tableNo, setTableNo] = useState<string>('');
-  const [seatNo, setSeatNo] = useState<string>('');
-  const [guestName, setGuestName] = useState<string>('');
-  const [eventName, setEventName] = useState<string>('');
+export default function OrderPage() {
   const [menu, setMenu] = useState<any[]>([]);
-  const [cart, setCart] = useState<any[]>([]);
-  const [orderId, setOrderId] = useState<string>('');
-  const [status, setStatus] = useState<string>('PLACED');
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [status, setStatus] = useState<string>('idle');
+  const [orderId, setOrderId] = useState<string | null>(null);
+
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const eventId = params.get('eventId') || 'demo-001';
+  const table = params.get('table') || '';
+  const seat = params.get('seat') || '';
+  const name = params.get('name') || '';
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const e = params.get('eventId'); const t = params.get('table'); const s = params.get('seat'); const n = params.get('name');
-    if (e) setEventId(e); if (t) setTableNo(t); if (s) setSeatNo(s); if (n) setGuestName(n);
-  }, []);
+    fetch(`/api/events/${eventId}/menu`).then(r=>r.json()).then(setMenu);
+  }, [eventId]);
 
-  async function loadMenu(){
-    const res = await fetch(`/api/events/${eventId}/menu`);
-    if (!res.ok) return;
-    const data = await res.json();
-    setEventName(data.name); setMenu(data.menu);
-  }
+  const items = useMemo(() => menu.map((m:any) => ({ ...m, qty: cart[m.id] || 0 })), [menu, cart]);
+  const total = useMemo(() => items.reduce((s,i)=> s + i.price * i.qty, 0), [items]);
 
-  useEffect(() => { loadMenu(); }, [eventId]);
-
-  const total = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart]);
-
-  function add(item:any){
-    setCart(prev => {
-      const i = prev.findIndex((p:any) => p.id === item.id);
-      if (i >= 0){ const copy = [...prev]; copy[i].qty++; return copy; }
-      return [...prev, { ...item, qty: 1 }];
+  const placeOrder = async () => {
+    const lines = items.filter(i=>i.qty>0).map(i=>({ id:i.id, qty:i.qty }));
+    if (!lines.length) return;
+    setStatus('placing');
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ eventId, table, seat, name, lines })
     });
-  }
-  function remove(item:any){
-    setCart(prev => {
-      const i = prev.findIndex((p:any) => p.id === item.id);
-      if (i >= 0){ const copy = [...prev]; copy[i].qty--; if (copy[i].qty <= 0) copy.splice(i,1); return copy; }
-      return prev;
-    });
-  }
-
-  async function placeOrder(){
-    const payload = {
-      eventId, table: tableNo, seat: seatNo || null, name: guestName || null,
-      items: cart.map(c => ({ id: c.id, qty: c.qty }))
-    };
-    const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json();
-    setOrderId(data.orderId);
-    setStatus('PLACED');
-    pollStatus(data.orderId);
-  }
+    setOrderId(data.id);
+    setStatus('placed');
+  };
 
-  async function pollStatus(id:string){
-    const res = await fetch(`/api/orders/${id}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    setStatus(data.status);
-    if (data.status !== 'DELIVERED') setTimeout(() => pollStatus(id), 2500);
-  }
+  useEffect(() => {
+    if (!orderId) return;
+    const t = setInterval(async () => {
+      const res = await fetch(`/api/orders/${orderId}/status`);
+      const data = await res.json();
+      setStatus(data.status || 'placed');
+    }, 3000);
+    return () => clearInterval(t);
+  }, [orderId]);
 
   return (
-    <div>
-      <Header />
-      <main className="max-w-6xl mx-auto px-4 section space-y-6">
-        <div className="card p-6">
-
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-
-            <div>
-
-              <div className="pill">Event: {eventId} · {eventName || 'Loading...'}</div>
-
-              <div className="text-sm text-brand-gray">Table {tableNo || '—'} {seatNo ? ('· Seat ' + seatNo) : ''} {guestName ? ('· ' + guestName) : ''}</div>
-
-            </div>
-
-            <form className="flex items-center gap-2 flex-wrap" onSubmit={(e)=> e.preventDefault()}>
-
-              <input placeholder="Event Id" className="border rounded-xl px-3 py-2" value={eventId} onChange={e=>setEventId(e.target.value)} />
-
-              <input placeholder="Table" className="border rounded-xl px-3 py-2 w-24" value={tableNo} onChange={e=>setTableNo(e.target.value)} />
-
-              <input placeholder="Seat" className="border rounded-xl px-3 py-2 w-24" value={seatNo} onChange={e=>setSeatNo(e.target.value)} />
-
-              <input placeholder="Name" className="border rounded-xl px-3 py-2" value={guestName} onChange={e=>setGuestName(e.target.value)} />
-
-              <button className="btn btn-outline" onClick={loadMenu}>Load Menu</button>
-
-            </form>
-
-          </div>
-
+    <div className="mx-auto max-w-7xl px-4">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Order</h1>
+          <p className="text-sm text-slate-600">Event {eventId}{table && ` • Table ${table}`}{seat && ` • Seat ${seat}`}{name && ` • ${name}`}</p>
         </div>
+        <div className="rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm text-slate-700">Total: <span className="font-semibold text-emerald-700">{money(total)}</span></div>
+      </div>
 
-
-        <div className="grid md:grid-cols-3 gap-6">
-
-          <section className="md:col-span-2 space-y-3">
-
-            <h2 className="h2">Menu</h2>
-
-            <div className="grid sm:grid-cols-2 gap-3">
-
-              {menu.map((m:any) => (
-
-                <MenuCard key={m.id} item={m} onAdd={add} onRemove={remove} qty={cart.find(c=>c.id===m.id)?.qty} />
-
-              ))}
-
-            </div>
-
-          </section>
-
-
-          <aside className="space-y-3">
-
-            <h2 className="h2">Your Order</h2>
-
-            <div className="card p-4 space-y-2">
-
-              {cart.length === 0 && <div className="text-brand-gray">No items yet</div>}
-
-              {cart.map(c => (<div key={c.id} className="flex items-center justify-between">
-
-                <div>{c.name} × {c.qty}</div><div className="font-semibold">{money(c.price * c.qty)}</div>
-
-              </div>))}
-
-              <div className="hr my-2"></div>
-
-              <div className="flex items-center justify-between font-semibold">
-
-                <div>Total</div><div>{money(total)}</div>
-
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {items.map(item => (
+          <div key={item.id} className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+            <MenuCard item={item} />
+            <div className="mt-3 flex items-center justify-between">
+              <div className="text-sm font-medium text-slate-700">{money(item.price)}</div>
+              <div className="flex items-center gap-2">
+                <button onClick={()=> setCart(c => ({...c, [item.id]: Math.max(0, (c[item.id]||0)-1)}))} className="rounded-lg border px-3 py-1">-</button>
+                <span className="min-w-[2ch] text-center">{item.qty}</span>
+                <button onClick={()=> setCart(c => ({...c, [item.id]: (c[item.id]||0)+1}))} className="rounded-lg border px-3 py-1">+</button>
               </div>
-
-              <button className="btn btn-accent w-full mt-2" disabled={!cart.length || !tableNo} onClick={placeOrder}>Place Order</button>
-
-              {orderId && <div className="text-sm text-brand-gray">Order #{orderId}</div>}
-
             </div>
+          </div>
+        ))}
+      </div>
 
-            <div className="space-y-2">
+      <div className="sticky bottom-6 mt-8 flex justify-end">
+        <button onClick={placeOrder} disabled={!total || status==='placing'} className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+          {status==='placing' ? 'Placing...' : 'Place Order'}
+        </button>
+      </div>
 
-              <h3 className="h2 text-xl">Live Tracking</h3>
-
-              <StatusTimeline status={status} />
-
-            </div>
-
-          </aside>
-
+      {orderId && (
+        <div className="mt-10 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+          <div className="mb-2 text-sm font-semibold text-emerald-700">Order Status</div>
+          <StatusTimeline status={status}/>
         </div>
-
-      </main>
-
-      <Footer />
-
+      )}
     </div>
-
-  )
-
+  );
 }

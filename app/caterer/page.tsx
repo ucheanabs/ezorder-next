@@ -1,81 +1,51 @@
 'use client';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { useEffect, useState } from 'react';
 
-export default function Caterer(){
-  const [eventId, setEventId] = useState('demo-001');
+export default function CatererPage() {
   const [orders, setOrders] = useState<any[]>([]);
+  const eventId = 'demo-001';
 
-  async function load(){
-    const res = await fetch(`/api/events/${eventId}/orders`);
-    if (!res.ok) return;
-    setOrders(await res.json());
-  }
-  useEffect(() => { load(); const t = setInterval(load, 3000); return () => clearInterval(t); }, [eventId]);
-
-  async function updateStatus(orderId:string, status:string){
-    await fetch(`/api/orders/${orderId}/status`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch(`/api/events/${eventId}/orders`);
+      const data = await res.json();
+      setOrders(data);
+    };
     load();
-  }
+    const t = setInterval(load, 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  const advance = async (id:string, status:string) => {
+    const next = status==='placed' ? 'preparing' : status==='preparing' ? 'out_for_delivery' : 'delivered';
+    await fetch(`/api/orders/${id}/status`, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ status: next })});
+    setOrders(os => os.map(o => o.id===id ? { ...o, status: next } : o));
+  };
 
   return (
-    <div>
-      <Header />
-      <main className="max-w-6xl mx-auto px-4 section space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-7xl px-4">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900">Caterer Dashboard</h1>
+      <p className="text-sm text-slate-600">Update order statuses and manage fulfillment</p>
 
-          <h1 className="h1">Caterer Console</h1>
-
-          <div className="flex items-center gap-2">
-
-            <input value={eventId} onChange={e=>setEventId(e.target.value)} className="border rounded-xl px-3 py-2"/>
-
-            <button className="btn btn-outline" onClick={load}>Refresh</button>
-
-          </div>
-
-        </div>
-
-
-        <div className="grid gap-3">
-
-          {orders.map(o => (
-
-            <div key={o.orderId} className="card p-4 flex items-center justify-between flex-wrap gap-4">
-
-              <div>
-
-                <div className="font-heading">Order #{o.orderId}</div>
-
-                <div className="text-sm text-brand-gray">Table {o.table}{o.seat?'-'+o.seat:''} {o.name?('· '+o.name):''}</div>
-
-                <div className="text-sm">{o.items.map((it:any)=>`${it.id}×${it.qty}`).join(', ')}</div>
-
-              </div>
-
-              <div className="flex items-center gap-2">
-
-                {['PLACED','PREPARING','ON_THE_WAY','DELIVERED'].map(s => (
-
-                  <button key={s} className={`btn ${o.status===s ? 'btn-primary' : 'btn-outline'}`} onClick={()=>updateStatus(o.orderId, s)}>{s.replaceAll('_',' ')}</button>
-
-                ))}
-
-              </div>
-
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {orders.map((o:any)=>(
+          <div key={o.id} className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-slate-600">Order</div>
+              <div className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">{o.status}</div>
             </div>
-
-          ))}
-
-        </div>
-
-      </main>
-
-      <Footer />
-
+            <div className="mt-1 text-xl font-bold">#{o.id.slice(0,8)} • Table {o.table}{o.seat ? ` • ${o.seat}` : ''}</div>
+            <ul className="mt-3 list-disc pl-5 text-sm text-slate-700">
+              {o.lines.map((l:any)=> <li key={l.id}>{l.name} × {l.qty}</li>)}
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <button onClick={()=>advance(o.id, o.status)} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                {o.status==='placed' ? 'Start Preparing' : o.status==='preparing' ? 'Send to Table' : 'Mark Delivered'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-
-  )
-
+  );
 }
