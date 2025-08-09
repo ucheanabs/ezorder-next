@@ -1,39 +1,30 @@
-'use client';
+cat > app/qr/page.tsx <<'EOF'
+import { headers } from 'next/headers';
+import QRClient from './QRClient';
 
-import { useState, useEffect, useMemo } from 'react';
-import QRCode from 'qrcode';
+export const dynamic = 'force-dynamic';
 
-export default function QRPage() {
-  const [qr, setQr] = useState('');
-  const eventId = 'demo-001';
-  const table = '1';
-  const seat = 'A';
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
+  const h = headers();
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
+  const proto = h.get('x-forwarded-proto') ?? (host.includes('localhost') ? 'http' : 'https');
+  const origin = `${proto}://${host}`;
 
-  const orderUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const origin = window.location.origin;
-    return `${origin}/order?eventId=${eventId}&table=${table}&seat=${seat}`;
-  }, [eventId, table, seat]);
+  const sp = new URLSearchParams();
+  const eventId = typeof searchParams.eventId === 'string' ? searchParams.eventId : '';
+  const table = typeof searchParams.table === 'string' ? searchParams.table : '';
+  const seat = typeof searchParams.seat === 'string' ? searchParams.seat : '';
+  const name = typeof searchParams.name === 'string' ? searchParams.name : '';
+  if (eventId) sp.set('eventId', eventId);
+  if (table) sp.set('table', table);
+  if (seat) sp.set('seat', seat);
+  if (name) sp.set('name', name);
 
-  useEffect(() => {
-    if (!orderUrl) return;
-    QRCode.toDataURL(orderUrl, { width: 300, margin: 2 })
-      .then(setQr)
-      .catch(console.error);
-  }, [orderUrl]);
-
-  return (
-    <div className="section">
-      <div className="max-w-xl mx-auto card p-8 flex flex-col items-center">
-        <h1 className="h1 mb-2">Scan to Order</h1>
-        <p className="muted mb-6">Table {table} • Seat {seat}</p>
-        {qr ? (
-          <img src={qr} alt="QR Code" className="shadow rounded-lg p-4 bg-white" />
-        ) : (
-          <div className="w-72 h-72 bg-emerald-100 animate-pulse rounded-lg" />
-        )}
-        <a href={orderUrl} className="btn btn-primary mt-6">Try the Ordering Flow</a>
-      </div>
-    </div>
-  );
+  const href = `${origin}/order${sp.toString() ? `?${sp.toString()}` : ''}`;
+  return <QRClient href={href} />;
 }
+EOF
