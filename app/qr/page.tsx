@@ -1,4 +1,10 @@
+cat > app/qr/page.tsx <<'EOF'
 export const dynamic = 'force-dynamic';
-export const revalidate = false;
-import QRGenerator from './QRClient';
-export default function Page() { return <QRGenerator />; }
+import NextDynamic from 'next/dynamic';
+
+const QRClient = NextDynamic(() => import('./QRClient'), { ssr: false });
+
+export default function Page() {
+  return <QRClient />;
+}
+EOF

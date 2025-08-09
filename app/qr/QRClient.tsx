@@ -1,68 +1,97 @@
+cat > app/qr/QRClient.tsx <<'EOF'
 'use client';
-import { useMemo, useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 
-export default function QRGenerator() {
+import { useState, useEffect, useMemo } from 'react';
+import QRCode from 'qrcode';
+
+export default function QRClient() {
+  const [qr, setQr] = useState('');
   const [eventId, setEventId] = useState('demo-001');
-  const [tableStart, setTableStart] = useState(1);
-  const [tableEnd, setTableEnd] = useState(10);
-  const [seats, setSeats] = useState('A,B,C,D');
-  const [origin, setOrigin] = useState<string>('');
+  const [table, setTable] = useState('1');
+  const [seat, setSeat] = useState('A');
+  const [name, setName] = useState('');
 
-  useEffect(() => { if (typeof window !== 'undefined') setOrigin(window.location.origin); }, []);
+  const orderUrl = useMemo(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const p = new URLSearchParams({ eventId, table, seat });
+    if (name) p.set('name', name);
+    return `${origin}/order?${p.toString()}`;
+  }, [eventId, table, seat, name]);
 
-  const targets = useMemo(() => {
-    const arr: string[] = [];
-    for (let t = tableStart; t <= tableEnd; t++) {
-      const seatList = seats.trim() ? seats.split(',').map(s => s.trim()) : [''];
-      seatList.forEach(seat => {
-        const path = `/order?eventId=${encodeURIComponent(eventId)}&table=${t}${seat ? `&seat=${encodeURIComponent(seat)}` : ''}`;
-        arr.push(origin ? `${origin}${path}` : path);
-      });
-    }
-    return arr;
-  }, [eventId, tableStart, tableEnd, seats, origin]);
+  useEffect(() => {
+    if (!orderUrl) return;
+    QRCode.toDataURL(orderUrl, { width: 320, margin: 2 }).then(setQr).catch(() => setQr(''));
+  }, [orderUrl]);
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-4">
-      <h1 className="text-3xl font-bold text-emerald-700">QR Generator</h1>
-      <div className="grid md:grid-cols-4 gap-3">
-        <label className="flex flex-col gap-1">
-          <span>Event ID</span>
-          <input className="border rounded px-3 py-2" value={eventId} onChange={e=>setEventId(e.target.value)} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span>Table Start</span>
-          <input type="number" className="border rounded px-3 py-2" value={tableStart} onChange={e=>setTableStart(parseInt(e.target.value||'1',10))} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span>Table End</span>
-          <input type="number" className="border rounded px-3 py-2" value={tableEnd} onChange={e=>setTableEnd(parseInt(e.target.value||'1',10))} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span>Seats (comma-sep, optional)</span>
-          <input className="border rounded px-3 py-2" value={seats} onChange={e=>setSeats(e.target.value)} placeholder="A,B,C,D or empty" />
-        </label>
-      </div>
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {targets.map((url, i) => <QRCard key={i} url={url} />)}
-      </div>
-    </main>
-  );
-}
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
+      <div className="mx-auto max-w-5xl px-6 py-10">
+        <header className="flex items-center justify-between">
+          <div className="text-2xl font-bold text-emerald-800">EZ Order</div>
+          <a href="/" className="text-sm text-slate-600 hover:text-slate-900">Home</a>
+        </header>
 
-function QRCard({ url }: { url: string }) {
-  const qs = url.includes('?') ? url.split('?')[1] : '';
-  const params = new URLSearchParams(qs);
-  const eventId = params.get('eventId') || '';
-  const table = params.get('table') || '';
-  const seat = params.get('seat') || '';
-  return (
-    <div className="border rounded-2xl p-4 bg-white shadow">
-      <div className="text-sm text-gray-600 mb-2">{eventId}</div>
-      <QRCodeSVG value={url} includeMargin width={300} height={300} />
-      <div className="mt-2 font-semibold">Table {table}{seat ? ` · Seat ${seat}` : ''}</div>
-      <div className="text-xs text-gray-500 break-all mt-1">{url}</div>
+        <div className="mt-10 grid gap-10 md:grid-cols-[1.2fr_.8fr]">
+          <div className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-sm">
+            <div className="text-sm font-semibold text-emerald-700">Scan to Order</div>
+            <h1 className="mt-1 text-3xl font-bold text-slate-900">Instant table ordering</h1>
+            <p className="mt-2 text-slate-600">Point your camera at the code to open the ordering page.</p>
+
+            <div className="mt-8 flex items-center justify-center">
+              {qr ? (
+                <img src={qr} alt="QR Code" className="rounded-2xl bg-white p-4 shadow-xl" />
+              ) : (
+                <div className="h-80 w-80 animate-pulse rounded-2xl bg-emerald-100" />
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-center">
+              <a
+                href={orderUrl}
+                className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Try the ordering flow
+              </a>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
+            <div className="text-sm font-semibold text-slate-700">Demo parameters</div>
+            <div className="mt-4 grid gap-4">
+              <Field label="Event ID">
+                <input value={eventId} onChange={e=>setEventId(e.target.value)} className="field" />
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Table">
+                  <input value={table} onChange={e=>setTable(e.target.value)} className="field" />
+                </Field>
+                <Field label="Seat">
+                  <input value={seat} onChange={e=>setSeat(e.target.value)} className="field" />
+                </Field>
+              </div>
+              <Field label="Name (optional)">
+                <input value={name} onChange={e=>setName(e.target.value)} className="field" />
+              </Field>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 break-all">
+                {orderUrl || 'Building link…'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style jsx global>{`
+        .field { @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-200; }
+      `}</style>
     </div>
   );
 }
+
+function Field({label, children}:{label:string; children:React.ReactNode}) {
+  return (
+    <label className="block text-sm">
+      <div className="mb-1 font-medium text-slate-700">{label}</div>
+      {children}
+    </label>
+  );
+}
+EOF
