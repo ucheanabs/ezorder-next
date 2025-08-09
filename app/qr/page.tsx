@@ -1,26 +1,34 @@
 'use client';
 export const dynamic = "force-dynamic";
-import { useMemo, useState } from 'react';
+export const revalidate = 0;
+
+import { useMemo, useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 
 export default function QRGenerator() {
   const [eventId, setEventId] = useState('demo-001');
   const [tableStart, setTableStart] = useState(1);
   const [tableEnd, setTableEnd] = useState(10);
-  const [seats, setSeats] = useState('A,B,C,D'); // comma-separated or leave blank
-  const base = typeof window !== 'undefined' ? window.location.origin : '';
+  const [seats, setSeats] = useState('A,B,C,D');
+  const [origin, setOrigin] = useState<string>('');
+
+  // Only read window.location on the client
+  useEffect(() => {
+    if (typeof window !== 'undefined') setOrigin(window.location.origin);
+  }, []);
 
   const targets = useMemo(() => {
-    const arr:string[] = [];
-    for(let t = tableStart; t <= tableEnd; t++){
+    const arr: string[] = [];
+    for (let t = tableStart; t <= tableEnd; t++) {
       const seatList = seats.trim() ? seats.split(',').map(s => s.trim()) : [''];
       seatList.forEach(seat => {
-        const url = `${base}/order?eventId=${encodeURIComponent(eventId)}&table=${t}${seat ? `&seat=${encodeURIComponent(seat)}` : ''}`;
-        arr.push(url);
+        const path = `/order?eventId=${encodeURIComponent(eventId)}&table=${t}${seat ? `&seat=${encodeURIComponent(seat)}` : ''}`;
+        // Use absolute URL in the browser, relative string during SSR to avoid invalid URL
+        arr.push(origin ? `${origin}${path}` : path);
       });
     }
     return arr;
-  }, [eventId, tableStart, tableEnd, seats, base]);
+  }, [eventId, tableStart, tableEnd, seats, origin]);
 
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-4">
@@ -53,14 +61,18 @@ export default function QRGenerator() {
 
 function QRCard({ url }: { url: string }) {
   const [src, setSrc] = useState<string>('');
-  useMemo(() => {
-    QRCode.toDataURL(url, { margin: 1, width: 300 }).then(setSrc);
+
+  useEffect(() => {
+    // Generate QR only in the browser; relative or absolute both work for scanners
+    QRCode.toDataURL(url, { margin: 1, width: 300 }).then(setSrc).catch(() => setSrc(''));
   }, [url]);
 
-  const label = new URL(url).searchParams;
-  const eventId = label.get('eventId') || '';
-  const table = label.get('table') || '';
-  const seat = label.get('seat') || '';
+  // Avoid `new URL()` on the server — parse the query by hand
+  const qs = url.includes('?') ? url.split('?')[1] : '';
+  const params = new URLSearchParams(qs);
+  const eventId = params.get('eventId') || '';
+  const table = params.get('table') || '';
+  const seat = params.get('seat') || '';
 
   return (
     <div className="border rounded-2xl p-4 bg-white shadow">
