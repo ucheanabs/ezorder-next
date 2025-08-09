@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
-import dynamic from 'next/dynamic';
+import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
 
-const OrderClient = dynamic(() => import('./OrderClient'), { ssr: false });
+const OrderClient = NextDynamic(() => import('./OrderClient'), { ssr: false });
 
 export default function Page() {
   return (
