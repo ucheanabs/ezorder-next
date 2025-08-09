@@ -1,27 +1,22 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      colors: {
-        brand: {
-          green: "#4CAF50",
-          orange: "#FF9800",
-          blue: "#2196F3",
-          bg: "#F5F0E5",
-          text: "#333333",
-          gray: "#666666"
-        }
-      },
       fontFamily: {
-        heading: ["Inter", "ui-sans-serif", "system-ui", "Arial", "sans-serif"],
-        sans: ["Open Sans", "ui-sans-serif", "system-ui", "Arial", "sans-serif"]
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        heading: ['Open Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
-      boxShadow: {
-        soft: "0 10px 30px rgba(0,0,0,0.08)"
-      }
+      colors: {
+        'brand-green': '#059669',
+        'brand-orange': '#ea580c',
+        'brand-bg': '#f9fafb',
+        'brand-text': '#111827',
+        'brand-gray': '#6b7280',
+      },
     },
   },
   plugins: [],
