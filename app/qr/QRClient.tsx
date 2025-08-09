@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
-import QRCode from 'qrcode';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function QRGenerator() {
   const [eventId, setEventId] = useState('demo-001');
@@ -52,8 +52,6 @@ export default function QRGenerator() {
 }
 
 function QRCard({ url }: { url: string }) {
-  const [src, setSrc] = useState<string>('');
-  useEffect(() => { QRCode.toDataURL(url, { margin: 1, width: 300 }).then(setSrc).catch(() => setSrc('')); }, [url]);
   const qs = url.includes('?') ? url.split('?')[1] : '';
   const params = new URLSearchParams(qs);
   const eventId = params.get('eventId') || '';
@@ -62,7 +60,7 @@ function QRCard({ url }: { url: string }) {
   return (
     <div className="border rounded-2xl p-4 bg-white shadow">
       <div className="text-sm text-gray-600 mb-2">{eventId}</div>
-      {src && <img src={src} alt="QR" className="w-full rounded" />}
+      <QRCodeSVG value={url} includeMargin width={300} height={300} />
       <div className="mt-2 font-semibold">Table {table}{seat ? ` · Seat ${seat}` : ''}</div>
       <div className="text-xs text-gray-500 break-all mt-1">{url}</div>
     </div>
