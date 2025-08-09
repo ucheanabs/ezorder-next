@@ -1,0 +1,20 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 700'>
+  <defs>
+    <linearGradient id='bg' x1='0' x2='1' y1='0' y2='1'>
+      <stop offset='0%' stop-color='#F5F0E5'/>
+      <stop offset='100%' stop-color='#EAF7EC'/>
+    </linearGradient>
+  </defs>
+  <rect x='0' y='0' width='1200' height='700' fill='url(#bg)'/>
+  <g transform='translate(60,60)'>
+    <rect x='0' y='0' rx='20' width='520' height='260' fill='#fff' stroke='#E5E7EB'/>
+    <text x='20' y='40' font-family='Inter' font-size='20' font-weight='700' fill='#4CAF50'>Orders by Time</text>
+    <rect x='20' y='70' width='480' height='160' fill='#F0FDF4' stroke='#C7F0CC' />
+    <rect x='580' y='0' rx='20' width='520' height='260' fill='#fff' stroke='#E5E7EB'/>
+    <text x='600' y='40' font-family='Inter' font-size='20' font-weight='700' fill='#4CAF50'>Top Items</text>
+    <rect x='600' y='70' width='480' height='160' fill='#FFF7ED' stroke='#FAD7B5' />
+    <rect x='0' y='300' rx='20' width='1100' height='300' fill='#fff' stroke='#E5E7EB'/>
+    <text x='20' y='340' font-family='Inter' font-size='20' font-weight='700' fill='#4CAF50'>Live Orders</text>
+    <rect x='20' y='360' width='1060' height='220' fill='#EFF6FF' stroke='#C7D2FE' />
+  </g>
+</svg>
