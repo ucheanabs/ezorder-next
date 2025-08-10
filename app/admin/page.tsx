@@ -1,3 +1,4 @@
+'use client';
 // app/admin/page.tsx
 'use client';
 

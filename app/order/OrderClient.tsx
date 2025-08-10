@@ -1,3 +1,4 @@
+'use client';
 // app/order/OrderClient.tsx
 'use client';
 

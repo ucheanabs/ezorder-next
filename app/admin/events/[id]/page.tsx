@@ -1,3 +1,4 @@
+'use client';
 // app/admin/events/[id]/page.tsx
 'use client';
 
