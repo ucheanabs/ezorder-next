@@ -1,3 +1,4 @@
+// app/api/orders/[orderId]/route.ts
 import { NextResponse } from "next/server";
 import { getOrder } from "../../../../lib/db";
 

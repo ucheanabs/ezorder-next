@@ -1,3 +1,4 @@
+// app/api/orders/[orderId]/status/route.ts
 import { NextResponse } from "next/server";
 import { updateOrderStatus } from "../../../../../lib/db";
 

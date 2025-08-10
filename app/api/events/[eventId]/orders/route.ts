@@ -1,6 +1,12 @@
+// app/api/orders/route.ts
 import { NextResponse } from "next/server";
-import { listOrders } from "../../../../../lib/db";
+import { createOrder } from "../../../lib/db";
 
-export async function GET(_: Request, { params }: { params: { eventId: string }}) {
-  return NextResponse.json({ orders: listOrders(params.eventId) });
+export async function POST(req: Request) {
+  const data = await req.json();
+  if (!data?.eventId || !Array.isArray(data?.items) || data.items.length === 0) {
+    return NextResponse.json({ error: "eventId and items are required" }, { status: 400 });
+  }
+  const order = createOrder(String(data.eventId), data.items);
+  return NextResponse.json(order, { status: 201 });
 }
