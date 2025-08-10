@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { listEvents, upsertEvent } from "../../../lib/db";
 
 export async function GET() {
-  return NextResponse.json({ events: listEvents() });
+  return NextResponse.json(listEvents());
 }
 
 export async function POST(req: Request) {
