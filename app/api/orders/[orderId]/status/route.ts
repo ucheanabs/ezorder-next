@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { updateOrderStatus } from "../../../../../lib/db";
+import { updateOrderStatus } from "../../../../lib/db";
+
+export const dynamic = "force-dynamic";
 
 export async function PATCH(req: Request, { params }: { params: { orderId: string }}) {
   const body = await req.json();

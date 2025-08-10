@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getEvent, upsertEvent, deleteEvent } from "../../../../lib/db";
+import { getEvent, upsertEvent, deleteEvent } from "../../../lib/db";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(_: Request, { params }: { params: { eventId: string }}) {
   const ev = getEvent(params.eventId);
@@ -14,7 +16,9 @@ export async function PUT(req: Request, { params }: { params: { eventId: string 
     name: data.name,
     date: data.date,
     venue: data.venue,
+    zones: Array.isArray(data.zones) ? data.zones : [],
     menu: Array.isArray(data.menu) ? data.menu : [],
+    isOpen: data.isOpen ?? true,
   });
   return NextResponse.json(ev);
 }
