@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { markArrived } from "../../../../lib/db";
+import { markArrived } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

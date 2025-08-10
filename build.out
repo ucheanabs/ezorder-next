@@ -1,0 +1,20 @@
+
+> ezorder-next@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.5
+
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: tsconfig.json(5,1): error TS1005: ':' expected.
+
+    at getTypeScriptConfiguration (/Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/lib/typescript/getTypeScriptConfiguration.js:31:19)
+    at loadJsConfig (/Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/build/load-jsconfig.js:112:91)
+    at async loadProjectInfo (/Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/build/webpack-config.js:283:43)
+    at async /Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/build/webpack-build/impl.js:137:22
+    at async Span.traceAsyncFn (/Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/trace/trace.js:154:20)
+    at async webpackBuildImpl (/Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/build/webpack-build/impl.js:136:21)
+    at async Object.workerMain (/Users/uche/Desktop/ezorder-next-fixed/node_modules/next/dist/build/webpack-build/impl.js:326:20) {
+  type: 'FatalError'
+}

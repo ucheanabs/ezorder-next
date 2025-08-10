@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrder } from "../../../lib/db";
-
-export const dynamic = "force-dynamic";
+import { getOrder } from "../../../../lib/db";
 
 export async function GET(_: Request, { params }: { params: { orderId: string }}) {
   const o = getOrder(params.orderId);

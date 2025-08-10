@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getEvent, upsertEvent, deleteEvent } from "../../../lib/db";
+import { getEvent, upsertEvent, deleteEvent } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

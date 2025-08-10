@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fileComplaint } from "../../../../lib/db";
+import { fileComplaint } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

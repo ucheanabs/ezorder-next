@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { createOrder, getEvent } from "../../lib/db";
-
-export const dynamic = "force-dynamic";
+import { createOrder } from "../../../lib/db";
 
 export async function POST(req: Request) {
   const data = await req.json();
-  if (!data?.eventId || !Array.isArray(data?.items) || !data?.seat) {
-    return NextResponse.json({ error: "eventId, seat, items required" }, { status: 400 });
+  if (!data?.eventId || !Array.isArray(data?.items) || data.items.length === 0) {
+    return NextResponse.json({ error: "eventId and items are required" }, { status: 400 });
   }
-  const ev = getEvent(data.eventId);
-  if (!ev || !ev.isOpen) return NextResponse.json({ error: "event closed" }, { status: 400 });
-  const order = createOrder(data.eventId, data.items, data.seat);
+  const order = createOrder(data.eventId, data.items);
   return NextResponse.json(order, { status: 201 });
 }
