@@ -1,8 +1,5 @@
-import NextDynamic from 'next/dynamic';
-export const dynamic = 'force-dynamic';
-const OrderClient = NextDynamic(() => import('./OrderClient'), { ssr: false });
-
-export default function Page({ searchParams }: { searchParams: Record<string,string|string[]|undefined>}) {
-  const eventId = typeof searchParams.eventId === 'string' ? searchParams.eventId : 'demo-001';
-  return <OrderClient initialEventId={eventId} />;
+import OrderClient from './ui/OrderClient';
+export default function Page({ searchParams }: { searchParams: Record<string,string|string[]|undefined> }){
+  const get = (k:string)=> typeof searchParams?.[k] === 'string' ? String(searchParams[k]) : '';
+  return <OrderClient initial={{ eventId:get('eventId'), table:get('table'), seat:get('seat'), name:get('name') }} />;
 }

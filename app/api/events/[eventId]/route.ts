@@ -14,6 +14,7 @@ export async function PUT(req: Request, { params }: { params: { eventId: string 
     name: data.name,
     date: data.date,
     venue: data.venue,
+    seating: data.seating,
     menu: Array.isArray(data.menu) ? data.menu : [],
   });
   return NextResponse.json(ev);
