@@ -7,8 +7,8 @@ const tables = Array.from({length:24},(_,i)=>({n:i+1,state:[4,13].includes(i)?'a
 export default function Admin() {
  return <div className="command-page">
    <div className="command-shell">
-    <header className="command-head"><div><span className="section-kicker">Event command</span><h1>Aurora Gala</h1><p>Grand Pavilion Â· Saturday, 25 July</p></div><div className="command-actions"><button><Radio size={15}/> Live view</button><button className="dark"><Command size={15}/> Actions</button></div></header>
-    <section className="command-status"><span className="pulse"/><strong>Service is flowing beautifully</strong><span>482 guests Â· Main course Â· 8:42 PM</span><b>94% health</b></section>
+    <header className="command-head"><div><span className="section-kicker">Event command</span><h1>Aurora Gala</h1><p>Grand Pavilion · Saturday, 25 July</p></div><div className="command-actions"><button><Radio size={15}/> Live view</button><button className="dark"><Command size={15}/> Actions</button></div></header>
+    <section className="command-status"><span className="pulse"/><strong>Service is flowing beautifully</strong><span>482 guests · Main course · 8:42 PM</span><b>94% health</b></section>
     <section className="command-metrics">
       <article><div><span>Guests served</span><Users size={18}/></div><strong>428 <small>/ 482</small></strong><p><TrendingUp size={13}/> 89% complete</p></article>
       <article><div><span>Service rhythm</span><Clock3 size={18}/></div><strong>8:24 <small>min</small></strong><p><TrendingUp size={13}/> 12% faster than plan</p></article>
@@ -38,4 +38,3 @@ export default function Admin() {
    </div>
  </div>
 }
-

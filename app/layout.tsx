@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
 
 export const metadata: Metadata = {
-  title: 'EZOrder â€” Hospitality, orchestrated',
+  title: 'EZOrder — Hospitality, orchestrated',
   description: 'The intelligent service layer for remarkable events.',
   manifest: '/manifest.webmanifest',
 };
@@ -22,4 +22,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
