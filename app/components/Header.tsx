@@ -1,21 +1,34 @@
 'use client';
+
 import Link from 'next/link';
-import { QrCode, Utensils, BarChart3 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
+
+const nav = [
+  { href: '/order?eventId=demo-001&table=12&seat=4&name=Amara', label: 'Guest' },
+  { href: '/caterer?eventId=demo-001', label: 'Operations' },
+  { href: '/admin', label: 'Command' },
+];
 
 export default function Header() {
+  const pathname = usePathname();
   return (
-    <header className="w-full bg-brand-green text-white">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-heading font-bold">
-          <QrCode className="w-6 h-6" /><span>EZOrder</span>
-          <span className="text-white/80 text-xs ml-2">by VertexSolTech</span>
-        </Link>
-        <nav className="flex items-center gap-4">
-          <Link href="/order" className="hover:underline flex items-center gap-2"><Utensils className="w-4 h-4"/>Order</Link>
-          <Link href="/caterer" className="hover:underline flex items-center gap-2"><BarChart3 className="w-4 h-4"/>Caterer</Link>
-          <Link href="/admin" className="hover:underline">Admin</Link>
-        </nav>
-      </div>
+    <header className="site-header">
+      <Link href="/" className="brand" aria-label="EZOrder home">
+        <span className="brand-mark"><Sparkles size={16} /></span>
+        <span>EZ<span className="brand-light">Order</span></span>
+      </Link>
+      <nav className="main-nav" aria-label="Primary navigation">
+        {nav.map(item => (
+          <Link className={pathname.startsWith(item.href.split('?')[0]) ? 'active' : ''} href={item.href} key={item.href}>
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      <Link href="/order?eventId=demo-001&table=12&seat=4&name=Amara" className="header-cta">
+        Enter demo <ArrowUpRight size={15} />
+      </Link>
     </header>
   );
 }
+

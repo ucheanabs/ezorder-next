@@ -1,92 +1,47 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
 
-type Order={id:string; guestName:string; table:number; seat:number; items:{itemId:string; qty:number}[]; status:'pending'|'preparing'|'served'; complaint?:string; arrivedAt?:number|null; createdAt:number; updatedAt:number};
-type Event={id:string; name:string};
+import { useState } from 'react';
+import { AlertTriangle, Check, ChefHat, ChevronRight, Clock3, Flame, MoreHorizontal, Printer, Radio, Route, ShieldCheck, Sparkles, Users } from 'lucide-react';
 
-export default function Page({ searchParams }: { searchParams?: Record<string,string> }){
-  const urlParams = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search);
-  const initialEventId = urlParams?.get('eventId') || '';
+const seed = [
+  {id:'2418',table:12,seat:4,name:'Amara',items:['Ember Jollof','Hibiscus Cloud'],age:'02:14',status:'New',allergy:false},
+  {id:'2416',table:8,seat:1,name:'Kemi',items:['Suya-glazed salmon'],age:'06:42',status:'Cooking',allergy:true},
+  {id:'2414',table:21,seat:2,name:'Daniel',items:['Garden silk pasta','Puff-puff'],age:'08:18',status:'Plating',allergy:false},
+  {id:'2411',table:4,seat:7,name:'Maya',items:['Ember Jollof'],age:'11:04',status:'Ready',allergy:false},
+];
 
-  const [events,setEvents]=useState<Event[]>([]);
-  const [eventId,setEventId]=useState(initialEventId);
-  const [orders,setOrders]=useState<Order[]>([]);
-  const [loading,setLoading]=useState(false);
-
-  useEffect(()=>{ fetch('/api/events').then(r=>r.json()).then(d=>setEvents(d.events||[])); },[]);
-  useEffect(()=>{
-    if(!eventId){ setOrders([]); return; }
-    let active=true;
-    async function pull(){ setLoading(true); const r=await fetch(`/api/events/${eventId}/orders`); const d=await r.json(); if(active){ setOrders(d.orders||[]); setLoading(false);} }
-    pull();
-    const t = setInterval(pull, 4000);
-    return ()=>{ active=false; clearInterval(t); };
-  },[eventId]);
-
-  const counts = useMemo(()=>{
-    const total = orders.length;
-    const served = orders.filter(o=>o.status==='served').length;
-    const pending = orders.filter(o=>o.status!=='served').length;
-    return { total, served, pending };
-  },[orders]);
-
-  async function mark(id:string, status:'pending'|'preparing'|'served'){
-    await fetch(`/api/orders/${id}/status`,{ method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status })});
-  }
-  async function arrived(id:string){ await fetch(`/api/orders/${id}/arrived`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ arrived:true })}); }
-  async function complain(id:string){
-    const message = prompt('Complaint message') || '';
-    if(!message) return;
-    await fetch(`/api/orders/${id}/complaint`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message })});
-  }
-
-  return (
-    <div className="mx-auto max-w-5xl p-6 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <select className="rounded border px-3 py-2" value={eventId} onChange={e=>setEventId(e.target.value)}>
-          <option value="">Select event…</option>
-          {events.map(ev=> <option key={ev.id} value={ev.id}>{ev.name}</option>)}
-        </select>
-        <div className="rounded border bg-white px-3 py-2">Total: {counts.total}</div>
-        <div className="rounded border bg-white px-3 py-2">Pending: {counts.pending}</div>
-        <div className="rounded border bg-white px-3 py-2">Served: {counts.served}</div>
-      </div>
-
-      <div className="rounded border bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="p-2 text-left">Time</th>
-              <th className="p-2 text-left">Guest</th>
-              <th className="p-2 text-left">Table/Seat</th>
-              <th className="p-2 text-left">Items</th>
-              <th className="p-2 text-left">Status</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(o=>(
-              <tr key={o.id} className="border-t">
-                <td className="p-2">{new Date(o.createdAt).toLocaleTimeString()}</td>
-                <td className="p-2">{o.guestName||'-'}</td>
-                <td className="p-2">T{o.table}-S{o.seat}</td>
-                <td className="p-2">{o.items.map(i=>`${i.itemId}×${i.qty}`).join(', ')}</td>
-                <td className="p-2">{o.status}</td>
-                <td className="p-2 space-x-2">
-                  <button onClick={()=>mark(o.id,'preparing')} className="rounded border px-2 py-1">Preparing</button>
-                  <button onClick={()=>mark(o.id,'served')} className="rounded border px-2 py-1">Served</button>
-                  <button onClick={()=>arrived(o.id)} className="rounded border px-2 py-1">Arrived</button>
-                  <button onClick={()=>complain(o.id)} className="rounded border px-2 py-1">Complaint</button>
-                  <button onClick={()=>window.print()} className="rounded border px-2 py-1">Print</button>
-                </td>
-              </tr>
-            ))}
-            {(!orders || orders.length===0) && (
-              <tr><td colSpan={6} className="p-4 text-center text-slate-500">{loading?'Loading…':'No orders'}</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+export default function Caterer() {
+  const [orders,setOrders]=useState(seed);
+  const [toast,setToast]=useState('');
+  const advance=(id:string)=>setOrders(os=>os.map(o=>o.id===id?{...o,status:o.status==='New'?'Cooking':o.status==='Cooking'?'Plating':o.status==='Plating'?'Ready':'Dispatched'}:o));
+  const print=(id:string)=>{setToast(`Ticket EO-${id} sent to Hot Kitchen`);setTimeout(()=>setToast(''),2600)};
+  return <div className="ops-page">
+    <aside className="ops-sidebar">
+      <div className="ops-logo"><Sparkles size={17}/></div>
+      {[ChefHat,Radio,Route,Printer,Users].map((Icon,i)=><button className={i===0?'active':''} key={i}><Icon size={19}/></button>)}
+      <div className="ops-avatar">UC</div>
+    </aside>
+    <main className="ops-main">
+      <header className="ops-head"><div><span className="section-kicker">Kitchen orchestration</span><h1>Service flow</h1></div><div className="ops-live"><span className="pulse"/> Aurora Gala Â· live <b>482 guests</b></div></header>
+      <section className="ops-metrics">
+        <div><span>Active orders</span><strong>24</strong><small>8 entered in 5 min</small></div>
+        <div><span>Median rhythm</span><strong>8:24</strong><small className="good">â†“ 1:12 tonight</small></div>
+        <div><span>Ready now</span><strong>7</strong><small>3 runners nearby</small></div>
+        <div><span>Flow health</span><strong>94%</strong><small className="good">Excellent</small></div>
+      </section>
+      <section className="flow-alert"><div className="ai-icon"><Sparkles size={18}/></div><div><strong>Service brain recommendation</strong><p>Fire 3 salmon orders together now. Tables 8, 16 and 21 are aligned within the same course window.</p></div><button>Batch orders <ChevronRight size={15}/></button></section>
+      <div className="station-head"><div><h2>Hot kitchen</h2><span>12 active Â· capacity 76%</span></div><div className="station-tabs"><button className="active">All</button><button>New 6</button><button>Cooking 8</button><button>Ready 7</button></div></div>
+      <section className="kitchen-grid">
+        {orders.map(o=><article className={`kitchen-ticket ${o.allergy?'allergy':''}`} key={o.id}>
+          <div className="ticket-top"><span>EO-{o.id}</span><span className={`ticket-status ${o.status.toLowerCase()}`}>{o.status}</span><button><MoreHorizontal size={17}/></button></div>
+          <div className="ticket-place"><div className="table-badge">T{o.table}<small>S{o.seat}</small></div><div><strong>{o.name}</strong><span><Clock3 size={12}/> {o.age} in flow</span></div></div>
+          {o.allergy&&<div className="allergy-alert"><ShieldCheck size={15}/><strong>Allergy-safe protocol</strong><span>Nut-free Â· verify station</span></div>}
+          <div className="ticket-items">{o.items.map((x,i)=><div key={x}><b>{i+1}Ã—</b><span>{x}</span><small>{i===0?'Standard Â· no changes':'Serve chilled'}</small></div>)}</div>
+          <div className="ticket-actions"><button onClick={()=>print(o.id)} title="Print ticket"><Printer size={16}/></button><button className="advance-btn" onClick={()=>advance(o.id)}>{o.status==='Ready'?'Dispatch':o.status==='Plating'?'Mark ready':'Advance'} <ChevronRight size={15}/></button></div>
+        </article>)}
+      </section>
+    </main>
+    {toast&&<div className="ops-toast"><Check size={16}/>{toast}</div>}
+  </div>
 }
+
