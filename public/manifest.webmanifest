@@ -1,0 +1,10 @@
+{
+  "name": "EZOrder",
+  "short_name": "EZOrder",
+  "description": "Hospitality, orchestrated.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f2",
+  "theme_color": "#10221c"
+}
+
