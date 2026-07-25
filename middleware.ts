@@ -3,7 +3,11 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  // The live command overview is intentionally demo-accessible. Mutating
+  // event-management routes remain protected.
+  const protectedAdminRoute =
+    pathname.startsWith('/admin/create') || pathname.startsWith('/admin/events/');
+  if (protectedAdminRoute) {
     const ok = req.cookies.get('ez_admin_ok')?.value === '1';
     if (!ok) {
       const url = req.nextUrl.clone();
@@ -17,3 +21,4 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*'],
 };
+
