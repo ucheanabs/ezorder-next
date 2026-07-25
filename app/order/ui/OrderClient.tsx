@@ -1,117 +1,78 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
 
-type Seating={tables:number; seatsPerTable:number};
-type MenuItem={id:string; name:string; price:number; cuisine:'nigerian'|'continental'; course:'starter'|'main'|'dessert'|'drink'; stock:number; image?:string};
-type Event={id:string; name:string; seating:Seating};
-type OrderItem={itemId:string; qty:number};
+import { useMemo, useState } from 'react';
+import { ArrowLeft, Check, ChevronRight, Clock3, Heart, Leaf, Minus, Plus, Search, ShoppingBag, Sparkles, WheatOff, X } from 'lucide-react';
 
-export default function OrderClient({ initial }:{ initial:{eventId:string; table:string; seat:string; name:string} }){
-  const [events,setEvents]=useState<Event[]>([]);
-  const [eventId,setEventId]=useState(initial.eventId||'');
-  const [menu,setMenu]=useState<MenuItem[]>([]);
-  const [name,setName]=useState(initial.name||'');
-  const [table,setTable]=useState(initial.table||'');
-  const [seat,setSeat]=useState(initial.seat||'');
+type MenuItem = { id:string; name:string; description:string; price:number; time:string; tag:string; color:string; emoji:string };
+
+const menu:MenuItem[] = [
+  { id:'jollof', name:'Ember Jollof', description:'Fire-roasted pepper rice, citrus chicken, plantain crisp', price:5400, time:'14 min', tag:'Guest favourite', color:'#db582f', emoji:'ðŸ›' },
+  { id:'salmon', name:'Suya-glazed salmon', description:'Charred greens, coconut rice, yaji butter', price:7800, time:'18 min', tag:'Chefâ€™s signature', color:'#bc724f', emoji:'ðŸ£' },
+  { id:'pasta', name:'Garden silk pasta', description:'Cashew cream, basil, roasted tomato, herb oil', price:4600, time:'12 min', tag:'Plant powered', color:'#6d8956', emoji:'ðŸ' },
+  { id:'puff', name:'Truffle puff-puff', description:'Parmesan dust, smoked pepper dip', price:2600, time:'8 min', tag:'Perfect to share', color:'#c68e3e', emoji:'ðŸ¥Ÿ' },
+  { id:'zobo', name:'Hibiscus cloud', description:'Clarified zobo, pineapple, vanilla air', price:1800, time:'4 min', tag:'Zero proof', color:'#8f274e', emoji:'ðŸ¹' },
+  { id:'cake', name:'Midnight chocolate', description:'Cocoa sponge, malt caramel, sea salt', price:3200, time:'6 min', tag:'Celebration pick', color:'#5e4037', emoji:'ðŸ°' },
+];
+
+export default function OrderClient({ initial }:{ initial:{eventId:string;table:string;seat:string;name:string} }) {
+  const [active,setActive]=useState('For you');
   const [cart,setCart]=useState<Record<string,number>>({});
-  const [placing,setPlacing]=useState(false);
-  const [orderId,setOrderId]=useState('');
+  const [showCart,setShowCart]=useState(false);
+  const [placed,setPlaced]=useState(false);
+  const itemCount=Object.values(cart).reduce((a,b)=>a+b,0);
+  const total=useMemo(()=>Object.entries(cart).reduce((sum,[id,qty])=>sum+(menu.find(m=>m.id===id)?.price||0)*qty,0),[cart]);
+  const add=(id:string)=>setCart(c=>({...c,[id]:(c[id]||0)+1}));
+  const sub=(id:string)=>setCart(c=>{const next={...c}; if((next[id]||0)<=1) delete next[id]; else next[id]--; return next;});
 
-  useEffect(()=>{ fetch('/api/events').then(r=>r.json()).then(d=>setEvents(d.events||[])); },[]);
-  useEffect(()=>{
-    if(!eventId) return setMenu([]);
-    fetch(`/api/events/${encodeURIComponent(eventId)}/menu`).then(r=>r.json()).then(d=>setMenu(d.menu||[]));
-  },[eventId]);
-
-  const grouped = useMemo(()=>{
-    const g: Record<'nigerian'|'continental', Record<'starter'|'main'|'dessert'|'drink', MenuItem[]>> = {
-      nigerian:{starter:[],main:[],dessert:[],drink:[]},
-      continental:{starter:[],main:[],dessert:[],drink:[]}
-    };
-    for(const m of menu){ g[m.cuisine][m.course].push(m); }
-    return g;
-  },[menu]);
-
-  const total = useMemo(()=>{
-    return Object.entries(cart).reduce((sum,[id,qty])=>{
-      const mi = menu.find(m=>m.id===id); return sum + (mi? mi.price*qty : 0);
-    },0);
-  },[cart,menu]);
-
-  function add(id:string){ setCart(c=>{ const mi = menu.find(m=>m.id===id); const have = c[id]||0; if(!mi) return c; if(have>=mi.stock) return c; return {...c,[id]:have+1}; }); }
-  function sub(id:string){ setCart(c=>{ const have=c[id]||0; if(have<=1){ const { [id]:_,...rest }=c; return rest; } return {...c,[id]:have-1}; }); }
-  function clear(){ setCart({}); }
-
-  async function place(){
-    if(!eventId) return;
-    if(total<=0) return;
-    setPlacing(true);
-    const items:OrderItem[] = Object.entries(cart).map(([itemId,qty])=>({ itemId, qty }));
-    const res = await fetch('/api/orders',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-      eventId, guestName:name||'', table:Number(table||0), seat:Number(seat||0), items
-    })});
-    setPlacing(false);
-    if(res.ok){ const o = await res.json(); setOrderId(o.id); clear(); }
-  }
+  if(placed) return (
+    <div className="guest-success">
+      <div className="success-orbit"><div className="success-check"><Check size={34}/></div></div>
+      <span className="chip">Order EO-2418 confirmed</span>
+      <h1>The kitchen has you.</h1>
+      <p>Your order is in the flow. Weâ€™ll keep you updatedâ€”no need to wave anyone down.</p>
+      <div className="timeline-card glass-card">
+        {['Confirmed','Preparing','Ready for runner','At your table'].map((s,i)=><div className={`timeline-node ${i===0?'done':''}`} key={s}><i>{i===0?<Check size={13}/>:i+1}</i><span>{s}</span>{i===0&&<small>Just now</small>}</div>)}
+      </div>
+      <button className="primary-btn" onClick={()=>{setPlaced(false);setCart({});setShowCart(false)}}>Return to menu</button>
+    </div>
+  );
 
   return (
-    <div className="mx-auto max-w-5xl p-6 space-y-6">
-      <div className="rounded border bg-white p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-        <select className="rounded border px-3 py-2" value={eventId} onChange={e=>setEventId(e.target.value)}>
-          <option value="">Select event…</option>
-          {events.map(ev=> <option key={ev.id} value={ev.id}>{ev.name}</option>)}
-        </select>
-        <input className="rounded border px-3 py-2" placeholder="Your name" value={name} onChange={e=>setName(e.target.value)} />
-        <input className="rounded border px-3 py-2" placeholder="Table" value={table} onChange={e=>setTable(e.target.value)} />
-        <input className="rounded border px-3 py-2" placeholder="Seat" value={seat} onChange={e=>setSeat(e.target.value)} />
-      </div>
-
-      {eventId && (
-        <div className="space-y-6">
-          {(['nigerian','continental'] as const).map(cui=>(
-            <div key={cui} className="space-y-4">
-              <h2 className="text-xl font-semibold capitalize">{cui}</h2>
-              {(['starter','main','dessert','drink'] as const).map(course=>(
-                <div key={course}>
-                  <div className="mb-2 font-medium capitalize">{course}</div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {grouped[cui][course].map(mi=>(
-                      <div key={mi.id} className="rounded border bg-white p-3">
-                        {mi.image ? <img src={mi.image} alt="" className="mb-2 h-20 w-full rounded object-cover" /> : <div className="mb-2 h-20 w-full rounded bg-slate-100" />}
-                        <div className="font-medium">{mi.name}</div>
-                        <div className="text-sm text-slate-500">₦{mi.price.toLocaleString()} • In stock: {mi.stock}</div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <button onClick={()=>sub(mi.id)} className="rounded border px-3 py-1">-</button>
-                          <div>{cart[mi.id]||0}</div>
-                          <button onClick={()=>add(mi.id)} className="rounded bg-emerald-600 px-3 py-1 text-white">+</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+    <div className="guest-page">
+      <div className="guest-shell">
+        <header className="guest-welcome">
+          <div><span className="event-label">Aurora Foundation Gala</span><h1>Good evening, {initial.name || 'Amara'}.</h1><p>Table {initial.table||'12'} Â· Seat {initial.seat||'4'} <span>â€¢</span> Main service is open</p></div>
+          <button className="icon-btn" aria-label="Search menu"><Search size={20}/></button>
+        </header>
+        <section className="concierge-card">
+          <div className="concierge-icon"><Sparkles size={19}/></div>
+          <div><strong>Curated for your evening</strong><p>Based on tonightâ€™s menu rhythm, the Ember Jollof and Hibiscus Cloud will arrive beautifully together.</p></div>
+          <ChevronRight size={20}/>
+        </section>
+        <div className="diet-row"><button><Leaf size={15}/> Plant based</button><button><WheatOff size={15}/> Gluten aware</button><button>ðŸŒ¶ Mild</button><button>More filters</button></div>
+        <nav className="menu-tabs">{['For you','Starters','Mains','Drinks','Sweet'].map(t=><button className={active===t?'active':''} onClick={()=>setActive(t)} key={t}>{t}</button>)}</nav>
+        <div className="menu-heading"><div><span className="section-kicker">Tonightâ€™s edit</span><h2>{active}</h2></div><span>6 considered choices</span></div>
+        <div className="menu-grid">
+          {menu.map(item=><article className="food-card glass-card" key={item.id}>
+            <div className="food-visual" style={{background:`radial-gradient(circle at 30% 20%, ${item.color}aa, transparent 32%), linear-gradient(145deg, ${item.color}, #18221e)`}}>
+              <span>{item.emoji}</span><button aria-label={`Save ${item.name}`}><Heart size={17}/></button><div className="food-tag">{item.tag}</div>
             </div>
-          ))}
+            <div className="food-info"><h3>{item.name}</h3><p>{item.description}</p><div className="food-meta"><span>â‚¦{item.price.toLocaleString()}</span><small><Clock3 size={12}/> {item.time}</small></div>
+              {(cart[item.id]||0)>0?<div className="qty-control"><button onClick={()=>sub(item.id)}><Minus size={15}/></button><strong>{cart[item.id]}</strong><button onClick={()=>add(item.id)}><Plus size={15}/></button></div>:<button className="add-btn" onClick={()=>add(item.id)}><Plus size={16}/> Add</button>}
+            </div>
+          </article>)}
         </div>
-      )}
-
-      <div className="sticky bottom-0 rounded border bg-white p-4">
-        <div className="flex items-center justify-between">
-          <div className="font-semibold">Total: ₦{total.toLocaleString()}</div>
-          <div className="flex gap-2">
-            <button onClick={clear} className="rounded border px-3 py-2">Clear</button>
-            <button onClick={place} disabled={placing || total===0 || !eventId} className="rounded bg-emerald-600 px-4 py-2 text-white disabled:opacity-50">
-              {placing?'Placing…':'Place order'}
-            </button>
-          </div>
-        </div>
-        {orderId && (
-          <div className="mt-3 rounded bg-emerald-50 p-3 text-emerald-700">
-            Order placed. ID: {orderId}
-            <button onClick={()=>window.print()} className="ml-3 rounded border px-2 py-1">Print</button>
-          </div>
-        )}
       </div>
+      {itemCount>0&&<button className="floating-cart" onClick={()=>setShowCart(true)}><span><ShoppingBag size={18}/><b>{itemCount}</b></span><strong>View your order</strong><span>â‚¦{total.toLocaleString()}</span></button>}
+      {showCart&&<div className="cart-overlay" onClick={()=>setShowCart(false)}><aside className="cart-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="cart-head"><div><span className="section-kicker">Table {initial.table||'12'} Â· Seat {initial.seat||'4'}</span><h2>Your order</h2></div><button className="icon-btn" onClick={()=>setShowCart(false)}><X size={20}/></button></div>
+        <div className="cart-items">{Object.entries(cart).map(([id,qty])=>{const m=menu.find(x=>x.id===id)!;return <div className="cart-item" key={id}><div className="cart-emoji" style={{background:m.color}}>{m.emoji}</div><div><strong>{m.name}</strong><small>Standard preparation</small></div><div className="mini-qty"><button onClick={()=>sub(id)}><Minus size={13}/></button><span>{qty}</span><button onClick={()=>add(id)}><Plus size={13}/></button></div><b>â‚¦{(m.price*qty).toLocaleString()}</b></div>})}</div>
+        <button className="service-note">ï¼‹ Add a dietary or service note</button>
+        <div className="cart-total"><span>Total</span><strong>â‚¦{total.toLocaleString()}</strong></div>
+        <button className="place-order" onClick={()=>setPlaced(true)}><span>Send to kitchen</span><ChevronRight size={19}/></button>
+        <p className="cart-assurance">You wonâ€™t be charged in this product preview.</p>
+      </aside></div>}
     </div>
   );
 }
+
